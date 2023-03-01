@@ -104,7 +104,7 @@ def update_cfar_plot(guard_cells, compute_cells):  # guard_cells, compute_cells)
         xaxis=dict(title="Time (s)"),
         yaxis=dict(title="Amplitude"),
     )
-    cfar_param_plot(fig, t, guard_cells, compute_cells, ref_index=int(t.size / 2))
+    fig = cfar_param_plot(fig, t, guard_cells, compute_cells, ref_index=int(t.size / 2))
     return fig
 
 

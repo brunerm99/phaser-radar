@@ -27,9 +27,3 @@ def cfar(
         * bias  # Multiply output by bias over which cell is not noise
     )
     return window_mean
-
-
-def wrap(x, fillval=None):
-    if fillval is not None:
-        return np.concatenate([x, np.ones(x.size) * fillval])
-    return np.concatenate([x, x[::-1]])
