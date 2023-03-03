@@ -142,7 +142,6 @@ app.layout = dmc.NotificationsProvider(
                                         ),
                                     ]
                                 ),
-                                # dbc.Row([html.Div([dmc.Button("What is CFAR?", id="open-modal"), style=dict(textAlign="center")])]),
                                 html.Br(),
                                 dbc.Row(
                                     [
@@ -210,7 +209,6 @@ app.layout = dmc.NotificationsProvider(
 def modal_demo(nc1, nc2, opened):
     with open("./static/markdown/cfar.md") as file:
         return not opened, file.read()
-    return not opened
 
 
 @app.callback(
