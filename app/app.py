@@ -142,6 +142,21 @@ app.layout = dmc.NotificationsProvider(
                                         ),
                                     ]
                                 ),
+                                # dbc.Row([html.Div([dmc.Button("What is CFAR?", id="open-modal"), style=dict(textAlign="center")])]),
+                                html.Br(),
+                                dbc.Row(
+                                    [
+                                        html.Div(
+                                            [
+                                                dmc.Button(
+                                                    "What is CFAR?",
+                                                    id="cfar-explanation-button",
+                                                )
+                                            ],
+                                            style=dict(textAlign="center"),
+                                        )
+                                    ]
+                                ),
                             ],
                             width=3,
                         ),
@@ -155,22 +170,47 @@ app.layout = dmc.NotificationsProvider(
                         ),
                     ],
                 ),
-                # Footer
-                # dbc.Row(
-                #     [
-                #         html.Hr(),
-                #         html.P([html.A("Google", href="google.com")]),
-                #     ],
-                #     className="h-5",
-                #     align="end",
-                # ),
                 html.Div(id="notifications-container"),
+                dmc.Modal(
+                    title="What is CFAR?",
+                    id="modal-simple",
+                    children=[
+                        dcc.Markdown(id="cfar-markdown", mathjax=True),
+                        dmc.Space(h=20),
+                        dmc.Group(
+                            [
+                                dmc.Button(
+                                    "Close",
+                                    color="red",
+                                    variant="outline",
+                                    id="modal-close-button",
+                                ),
+                            ],
+                            position="right",
+                        ),
+                    ],
+                    size="60%",
+                ),
             ],
             className="pad-row",
             fluid=True,
         )
     ]
 )
+
+
+@app.callback(
+    Output("modal-simple", "opened"),
+    Output("cfar-markdown", "children"),
+    Input("cfar-explanation-button", "n_clicks"),
+    Input("modal-close-button", "n_clicks"),
+    State("modal-simple", "opened"),
+    prevent_initial_call=True,
+)
+def modal_demo(nc1, nc2, opened):
+    with open("./static/markdown/cfar.md") as file:
+        return not opened, file.read()
+    return not opened
 
 
 @app.callback(
