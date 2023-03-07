@@ -4,7 +4,7 @@ import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 
-from helpers import wrap
+from utils import wrap
 
 
 def cfar_param_plot(
