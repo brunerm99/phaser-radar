@@ -6,6 +6,7 @@ import dash_mantine_components as dmc
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 import numpy as np
+from numpy.fft import fft, fftfreq
 from numpy.lib.stride_tricks import sliding_window_view
 import plotly.express as px
 import plotly.graph_objects as go
@@ -15,10 +16,12 @@ from configparser import ConfigParser
 from layouts import PLOTLY_DARK
 from processing import cfar
 from plotting import cfar_param_plot
+from phaser import setup, tx, rx
 
 # Pull in config
 config = ConfigParser()
 config.read("config.ini")
+phaser_config = dict(config["phaser"])
 
 bias_min = int(config["user_inputs"]["bias_min"])
 bias_max = int(config["user_inputs"]["bias_max"])
@@ -33,9 +36,13 @@ guard_max = int(config["user_inputs"]["guard_max"])
 guard_step = int(config["user_inputs"]["guard_step"])
 guard_def = int(config["user_inputs"]["guard_def"])
 
-# Data
-t = np.linspace(-8, 8, 1000)
-sinc = np.sinc(t)
+# Collect data
+my_sdr, my_phaser, N, ts = setup(phaser_config)
+try:
+    tx(my_sdr, phaser_config)
+except:
+    pass
+signal, signal_fft, freq = rx(my_sdr)
 
 # Create app
 app = Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
@@ -76,7 +83,7 @@ app.layout = dmc.NotificationsProvider(
                                                 {"value": i, "label": str(i)}
                                                 for i in range(
                                                     guard_min, guard_max + guard_step
-                                                )[::10]
+                                                )[:: guard_step * 2]
                                             ],
                                             value=guard_def,
                                         ),
@@ -92,7 +99,7 @@ app.layout = dmc.NotificationsProvider(
                                                 for i in range(
                                                     compute_min,
                                                     compute_max + compute_step,
-                                                )[::10]
+                                                )[:: compute_step * 2]
                                             ],
                                             value=compute_def,
                                         ),
@@ -134,7 +141,10 @@ app.layout = dmc.NotificationsProvider(
                                             [
                                                 html.Div(
                                                     [
-                                                        dmc.Button("Fetch new buffer"),
+                                                        dmc.Button(
+                                                            "Fetch new buffer",
+                                                            id="fetch-new-buffer",
+                                                        ),
                                                     ],
                                                     style=dict(textAlign="center"),
                                                 ),
@@ -222,40 +232,57 @@ def modal_demo(nc1, nc2, opened):
         Input("guard-cells-slider", "value"),
         Input("compute-cells-slider", "value"),
         Input("bias-slider", "value"),
+        Input("fetch-new-buffer", "n_clicks"),
     ],
 )
-def update_cfar_plot(guard_cells, compute_cells, bias):
+def update_cfar_plot(guard_cells, compute_cells, bias, fetch_new_buffer):
+    print(fetch_new_buffer)
+
     window_mean = cfar(
-        sinc,
+        signal_fft,
         compute_cells=compute_cells,
         guard_cells=guard_cells,
         method=np.mean,
         bias=bias,
     )
 
-    targets = sinc.copy()
+    targets = signal_fft.copy()
     targets[np.where((targets < window_mean) | (np.isnan(window_mean)))] = np.nan
 
     fig = make_subplots()
     fig.add_trace(
-        go.Scatter(x=t, y=sinc, name="Sinc", line=dict(color="rgba(0,127,255,0.5)"))
+        go.Scatter(
+            x=freq,
+            y=np.log10(signal_fft),
+            name="Signal FFT",
+            line=dict(color="rgba(0,127,255,0.5)"),
+        )
     )
     fig.add_trace(
         go.Scatter(
-            x=t,
-            y=targets,
+            x=freq,
+            y=np.log10(targets),
             name="Targets",
             line=dict(color="rgba(255,100,50,1)", width=5),
         )
     )
-    fig.add_trace(go.Scatter(x=t, y=window_mean, name="CFAR"))
+    fig.add_trace(go.Scatter(x=freq, y=np.log10(window_mean), name="CFAR"))
     fig.update_layout(PLOTLY_DARK)
     fig.update_layout(
         title="CFAR",
-        xaxis=dict(title="Time (s)"),
+        # xaxis=dict(title="Time (s)"),
+        xaxis=dict(title="Frequency (Hz)"),
         yaxis=dict(title="Amplitude"),
     )
-    fig = cfar_param_plot(fig, t, guard_cells, compute_cells, ref_index=int(t.size / 2))
+    # TODO: Fix
+    ref_index = np.argmin(freq - float(phaser_config["signal_freq_mhz"]) * 1e6)
+    fig = cfar_param_plot(
+        fig,
+        freq,
+        guard_cells,
+        compute_cells,
+        ref_index=ref_index,
+    )
     return (
         fig,
         "Guard Cells: %i" % guard_cells,
