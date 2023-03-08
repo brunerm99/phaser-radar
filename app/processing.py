@@ -7,6 +7,18 @@ from numpy.lib.stride_tricks import sliding_window_view
 def cfar(
     x: np.ndarray, compute_cells: int, guard_cells: int, bias: float = 1, method=np.mean
 ):
+    """Computes CFAR threshold.
+
+    Args:
+        x (np.ndarray): Input array to compute threshold for.
+        compute_cells (int): Cells surrounding reference cell to compute with.
+        guard_cells (int): Cells surrounding reference cell to discard.
+        bias (float, optional): Multiply threshold by this amount. Defaults to 1.
+        method (function, optional): Method to compute over compute_cells. Defaults to np.mean.
+
+    Returns:
+        np.ndarray: CFAR threshold.
+    """
     pad = int((compute_cells + guard_cells))
     # fmt: off
     window_mean = np.pad(                                                               # Pad front/back since n_windows < n_points
