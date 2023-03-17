@@ -270,18 +270,21 @@ def update_cfar_plot(guard_cells, compute_cells, bias, fetch_new_buffer):
     fig.update_layout(PLOTLY_DARK)
     fig.update_layout(
         title="CFAR",
-        # xaxis=dict(title="Time (s)"),
         xaxis=dict(title="Frequency (Hz)"),
         yaxis=dict(title="Amplitude"),
     )
     # TODO: Fix
-    ref_index = np.argmin(freq - float(phaser_config["signal_freq_mhz"]) * 1e6)
+    ref_index = np.argmin(np.abs(freq - float(phaser_config["signal_freq_mhz"]) * 1e6))
+    # ref_index = int(freq.size / 2)
     fig = cfar_param_plot(
         fig,
         freq,
         guard_cells,
         compute_cells,
         ref_index=ref_index,
+        min_val=np.log10(signal_fft).min(),
+        max_val=np.log10(signal_fft).max(),
+        shift=False,
     )
     return (
         fig,
