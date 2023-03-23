@@ -2,7 +2,7 @@
 # TODO: Needs to be cleaned up a lot
 
 import numpy as np
-from numpy.fft import fft, fftfreq
+from numpy.fft import fft, fftfreq, fftshift
 import plotly.express as px
 import plotly.graph_objects as go
 import sys
@@ -116,7 +116,8 @@ def rx(my_sdr):
 
     signal_fft = np.abs(fft(signal))
     signal_fft /= signal_fft.max()
-    freq = fftfreq(N, d=ts)
+    freq = np.linspace(-fs / 2, fs / 2, N)
+    # freq = fftfreq(N, d=ts)
 
     my_sdr.tx_destroy_buffer()
 

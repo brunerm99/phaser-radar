@@ -1,12 +1,12 @@
 # app.py
 
-from dash import Dash, html, dcc
+from dash import Dash, html, dcc, ctx
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 import numpy as np
-from numpy.fft import fft, fftfreq
+from numpy.fft import fft, fftfreq, fftshift
 from numpy.lib.stride_tricks import sliding_window_view
 import plotly.express as px
 import plotly.graph_objects as go
@@ -236,7 +236,9 @@ def modal_demo(nc1, nc2, opened):
     ],
 )
 def update_cfar_plot(guard_cells, compute_cells, bias, fetch_new_buffer):
-    print(fetch_new_buffer)
+    if "fetch-new-buffer" == ctx.triggered_id:
+        print("Fetching new buffer")
+        # signal, signal_fft, freq = rx(my_sdr)
 
     window_mean = cfar(
         signal_fft,
@@ -253,7 +255,7 @@ def update_cfar_plot(guard_cells, compute_cells, bias, fetch_new_buffer):
     fig.add_trace(
         go.Scatter(
             x=freq,
-            y=np.log10(signal_fft),
+            y=fftshift(np.log10(signal_fft)),
             name="Signal FFT",
             line=dict(color="rgba(0,127,255,0.5)"),
         )
@@ -261,21 +263,19 @@ def update_cfar_plot(guard_cells, compute_cells, bias, fetch_new_buffer):
     fig.add_trace(
         go.Scatter(
             x=freq,
-            y=np.log10(targets),
+            y=fftshift(np.log10(targets)),
             name="Targets",
             line=dict(color="rgba(255,100,50,1)", width=5),
         )
     )
-    fig.add_trace(go.Scatter(x=freq, y=np.log10(window_mean), name="CFAR"))
+    fig.add_trace(go.Scatter(x=freq, y=fftshift(np.log10(window_mean)), name="CFAR"))
     fig.update_layout(PLOTLY_DARK)
     fig.update_layout(
         title="CFAR",
         xaxis=dict(title="Frequency (Hz)"),
         yaxis=dict(title="Amplitude"),
     )
-    # TODO: Fix
     ref_index = np.argmin(np.abs(freq - float(phaser_config["signal_freq_mhz"]) * 1e6))
-    # ref_index = int(freq.size / 2)
     fig = cfar_param_plot(
         fig,
         freq,
