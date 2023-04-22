@@ -2,7 +2,6 @@
 
 from dash import Dash, html, dcc, ctx
 import dash_bootstrap_components as dbc
-import dash_mantine_components as dmc
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 import numpy as np
@@ -44,181 +43,132 @@ except:
     pass
 signal, signal_fft, freq = rx(my_sdr)
 
+# Dummy data
+# t = np.linspace(-8, 8, 1000)
+# signal_fft = np.sinc(t)
+# freq = np.arange(signal_fft.size)
+
 # Create app
 app = Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
 
-app.layout = dmc.NotificationsProvider(
+app.layout = dbc.Container(
     [
-        dbc.Container(
+        dbc.Row(
             [
-                dbc.Row(
+                dbc.Col(
                     [
-                        dbc.Col(
-                            [
-                                html.H1(children="CFAR Example"),
-                                html.Div(
-                                    children="This is showing how to perform and modify the CFAR algorithm."
-                                ),
-                            ]
-                        )
-                    ],
-                    align="end",
-                ),
-                html.Hr(),
-                dbc.Row(
+                        html.H1(children="CFAR Example"),
+                        html.Div(
+                            children="This is showing how to perform and modify the CFAR algorithm."
+                        ),
+                    ]
+                )
+            ],
+            align="end",
+        ),
+        html.Hr(),
+        dbc.Row(
+            [
+                # Sidebar
+                dbc.Col(
                     [
-                        # Sidebar
-                        dbc.Col(
+                        html.Div(
                             [
-                                html.Div(
-                                    [
-                                        dbc.Col([html.H5("Input parameters")]),
-                                        dmc.Text(id="guard-cells-text"),
-                                        dmc.Slider(
-                                            id="guard-cells-slider",
-                                            min=guard_min,
-                                            max=guard_max,
-                                            step=guard_step,
-                                            marks=[
-                                                {"value": i, "label": str(i)}
-                                                for i in range(
-                                                    guard_min, guard_max + guard_step
-                                                )[:: guard_step * 2]
-                                            ],
-                                            value=guard_def,
-                                        ),
-                                        html.Br(),
-                                        dmc.Text(id="compute-cells-text"),
-                                        dmc.Slider(
-                                            id="compute-cells-slider",
-                                            min=compute_min,
-                                            max=compute_max,
-                                            step=compute_step,
-                                            marks=[
-                                                {"value": i, "label": str(i)}
-                                                for i in range(
-                                                    compute_min,
-                                                    compute_max + compute_step,
-                                                )[:: compute_step * 2]
-                                            ],
-                                            value=compute_def,
-                                        ),
-                                        html.Br(),
-                                        dmc.Text(id="bias-text"),
-                                        dmc.Slider(
-                                            id="bias-slider",
-                                            min=bias_min,
-                                            max=bias_max,
-                                            step=bias_step,
-                                            marks=[
-                                                {"value": i, "label": str(i)}
-                                                for i in range(
-                                                    bias_min, bias_max + bias_step
-                                                )
-                                            ],
-                                            value=bias_def,
-                                        ),
-                                        html.Br(),
-                                    ]
-                                ),
-                                html.Hr(),
-                                dbc.Row(
-                                    [
-                                        dbc.Col(
-                                            [
-                                                html.Div(
-                                                    [
-                                                        dmc.Button(
-                                                            "Reset to defaults",
-                                                            id="reset-default",
-                                                        ),
-                                                    ],
-                                                    style=dict(textAlign="center"),
-                                                ),
-                                            ]
-                                        ),
-                                        dbc.Col(
-                                            [
-                                                html.Div(
-                                                    [
-                                                        dmc.Button(
-                                                            "Fetch new buffer",
-                                                            id="fetch-new-buffer",
-                                                        ),
-                                                    ],
-                                                    style=dict(textAlign="center"),
-                                                ),
-                                            ]
-                                        ),
-                                    ]
+                                dbc.Col([html.H5("Input parameters")]),
+                                html.P(id="guard-cells-text"),
+                                dcc.Slider(
+                                    guard_min,
+                                    guard_max,
+                                    id="guard-cells-slider",
+                                    step=guard_step,
+                                    marks={
+                                        f"{i}": f"{i}"
+                                        for i in range(
+                                            guard_min, guard_max + guard_step
+                                        )[:: guard_step * 2]
+                                    },
+                                    value=guard_def,
                                 ),
                                 html.Br(),
-                                dbc.Row(
+                                html.P(id="compute-cells-text"),
+                                dcc.Slider(
+                                    compute_min,
+                                    compute_max,
+                                    id="compute-cells-slider",
+                                    step=compute_step,
+                                    marks={
+                                        f"{i}": f"{i}"
+                                        for i in range(
+                                            compute_min, compute_max + compute_step
+                                        )[:: compute_step * 2]
+                                    },
+                                    value=compute_def,
+                                ),
+                                html.Br(),
+                                html.P(id="bias-text"),
+                                dcc.Slider(
+                                    bias_min,
+                                    bias_max,
+                                    id="bias-slider",
+                                    step=bias_step,
+                                    marks={
+                                        f"{i}": f"{i}"
+                                        for i in range(bias_min, bias_max + bias_step)
+                                    },
+                                    value=bias_def,
+                                ),
+                                html.Br(),
+                            ]
+                        ),
+                        html.Hr(),
+                        dbc.Row(
+                            [
+                                dbc.Col(
                                     [
                                         html.Div(
                                             [
-                                                dmc.Button(
-                                                    "What is CFAR?",
-                                                    id="cfar-explanation-button",
-                                                )
+                                                dbc.Button(
+                                                    "Reset to defaults",
+                                                    id="reset-default",
+                                                ),
                                             ],
                                             style=dict(textAlign="center"),
-                                        )
+                                        ),
                                     ]
                                 ),
-                            ],
-                            width=3,
-                        ),
-                        # Plot
-                        dbc.Col(
-                            [
-                                dcc.Graph(id="cfar-plot", style={"height": "60vh"}),
-                            ],
-                            width=True,
-                            style=dict(height="100%"),
-                        ),
-                    ],
-                ),
-                html.Div(id="notifications-container"),
-                dmc.Modal(
-                    title="What is CFAR?",
-                    id="modal-simple",
-                    children=[
-                        dcc.Markdown(id="cfar-markdown", mathjax=True),
-                        dmc.Space(h=20),
-                        dmc.Group(
-                            [
-                                dmc.Button(
-                                    "Close",
-                                    color="red",
-                                    variant="outline",
-                                    id="modal-close-button",
+                                dbc.Col(
+                                    [
+                                        html.Div(
+                                            [
+                                                dbc.Button(
+                                                    "Fetch new buffer",
+                                                    id="fetch-new-buffer",
+                                                ),
+                                            ],
+                                            style=dict(textAlign="center"),
+                                        ),
+                                    ]
                                 ),
-                            ],
-                            position="right",
+                            ]
                         ),
+                        html.Br(),
                     ],
-                    size="60%",
+                    width=3,
+                ),
+                # Plot
+                dbc.Col(
+                    [
+                        dcc.Graph(id="cfar-plot", style={"height": "60vh"}),
+                    ],
+                    width=True,
+                    style=dict(height="100%"),
                 ),
             ],
-            className="pad-row",
-            fluid=True,
-        )
-    ]
+        ),
+    ],
+    className="pad-row",
+    fluid=True,
 )
-
-
-@app.callback(
-    Output("modal-simple", "opened"),
-    Output("cfar-markdown", "children"),
-    Input("cfar-explanation-button", "n_clicks"),
-    Input("modal-close-button", "n_clicks"),
-    State("modal-simple", "opened"),
-    prevent_initial_call=True,
-)
-def modal_demo(nc1, nc2, opened):
-    with open("./static/markdown/cfar.md") as file:
-        return not opened, file.read()
 
 
 @app.callback(
@@ -292,23 +242,6 @@ def update_cfar_plot(guard_cells, compute_cells, bias, fetch_new_buffer):
         "Compute Cells: %i" % compute_cells,
         "Bias: %i" % bias,
     )
-
-
-# TODO: Complete resetting to defaults
-@app.callback(
-    Output("notifications-container", "children"),
-    Input("reset-default", "n_clicks"),
-    prevent_initial_state=True,
-)
-def reset_default(n_clicks):
-    print(n_clicks)
-    if n_clicks is not None:
-        return dmc.Notification(
-            title="Hey there!",
-            id="simple-notify",
-            action="show",
-            message="Notifications in Dash, Awesome!",
-        )
 
 
 if __name__ == "__main__":
