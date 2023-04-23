@@ -95,7 +95,7 @@ def cfar_param_plot(
         go.Scatter(
             x=wrap(x_plot),
             y=wrap(guard_region, fillval=min_val),
-            name="Guard Region",
+            name="Guard Region @ 100kHz",
             fill="toself",
             fillcolor="rgba(0,255,0,0.15)",
             line_color="rgba(255,0,0,0)",
@@ -105,7 +105,7 @@ def cfar_param_plot(
         go.Scatter(
             x=wrap(x_plot),
             y=wrap(compute_region, fillval=min_val),
-            name="Compute Region",
+            name="Compute Region @ 100kHz",
             fill="toself",
             fillcolor="rgba(0,0,255,0.15)",
             line_color="rgba(0,0,0,0)",
