@@ -188,7 +188,67 @@ app.layout = dbc.Container(
 def update_cfar_plot(guard_cells, compute_cells, bias, fetch_new_buffer):
     if "fetch-new-buffer" == ctx.triggered_id:
         print("Fetching new buffer")
-        # signal, signal_fft, freq = rx(my_sdr)
+        try:
+            tx(my_sdr, phaser_config)
+        except:
+            pass
+        _, signal_fft2, freq2 = rx(my_sdr)
+        window_mean = cfar(
+            signal_fft2,
+            compute_cells=compute_cells,
+            guard_cells=guard_cells,
+            method=np.mean,
+            bias=bias,
+        )
+
+        targets = signal_fft2.copy()
+        targets[np.where((targets < window_mean) | (np.isnan(window_mean)))] = np.nan
+
+        fig = make_subplots()
+        fig.add_trace(
+            go.Scatter(
+                x=freq2,
+                y=fftshift(np.log10(signal_fft2)),
+                name="Signal FFT",
+                line=dict(color="rgba(0,127,255,0.5)"),
+            )
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=freq2,
+                y=fftshift(np.log10(targets)),
+                name="Targets",
+                line=dict(color="rgba(255,100,50,1)", width=5),
+            )
+        )
+        fig.add_trace(
+            go.Scatter(x=freq2, y=fftshift(np.log10(window_mean)), name="CFAR")
+        )
+        fig.update_layout(PLOTLY_DARK)
+        fig.update_layout(
+            title="CFAR",
+            xaxis=dict(title="Frequency (Hz)", range=[100e3, 140e3]),
+            yaxis=dict(title="Amplitude"),
+        )
+        ref_index = np.argmin(
+            np.abs(freq2 - float(phaser_config["signal_freq_mhz"]) * 1e6)
+        )
+        fig = cfar_param_plot(
+            fig,
+            freq2,
+            guard_cells,
+            compute_cells,
+            ref_index=ref_index,
+            min_val=np.log10(signal_fft2).min(),
+            max_val=np.log10(signal_fft2).max(),
+            shift=False,
+        )
+        return (
+            fig,
+            "Guard Cells: %i" % guard_cells,
+            "Compute Cells: %i" % compute_cells,
+            "Bias: %i" % bias,
+        )
 
     window_mean = cfar(
         signal_fft,
@@ -222,7 +282,7 @@ def update_cfar_plot(guard_cells, compute_cells, bias, fetch_new_buffer):
     fig.update_layout(PLOTLY_DARK)
     fig.update_layout(
         title="CFAR",
-        xaxis=dict(title="Frequency (Hz)"),
+        xaxis=dict(title="Frequency (Hz)", range=[100e3, 140e3]),
         yaxis=dict(title="Amplitude"),
     )
     ref_index = np.argmin(np.abs(freq - float(phaser_config["signal_freq_mhz"]) * 1e6))

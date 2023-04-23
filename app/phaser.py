@@ -41,6 +41,7 @@ def setup(phaser_config):
     my_sdr.rx_buffer_size = int(fft_size)
     my_sdr.gain_control_mode_chan0 = "manual"  # manual or slow_attack
     my_sdr.gain_control_mode_chan1 = "manual"  # manual or slow_attack
+    my_sdr._rxadc.set_kernel_buffers_count(1)
     my_sdr.rx_hardwaregain_chan0 = int(30)  # must be between -3 and 70
     my_sdr.rx_hardwaregain_chan1 = int(30)  # must be between -3 and 70
 
